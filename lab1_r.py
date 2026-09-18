@@ -86,39 +86,54 @@ def rectangle():
     print("RECTANGLE complete")
 
 def lemniscate():
-    a = 50.0                         # 0.5 m in cm
-    W = BASE_WIDTH                   # distance between wheels, cm
+    a = 50.0                          # cm
+    W = BASE_WIDTH                    # cm
     wheel_radius = WHEEL_DIAMETER / 2.0
 
-    T = 20.0                         # time for full figure-eight, seconds
-    dt = 0.03
+    T = 45.0                          # seconds for one full figure-eight
+    dt = 0.03                         # update every ~30 ms
     alpha = 2.0 * math.pi / T
 
-    t = 0.0
+    # Important for continuously changing wheel speeds
+    robot_drive.left_motor.ramp_up_sp = 0
+    robot_drive.left_motor.ramp_down_sp = 0
+    robot_drive.right_motor.ramp_up_sp = 0
+    robot_drive.right_motor.ramp_down_sp = 0
 
-    while t < 2.0 * math.pi:
-        # Start at the centre of the figure-eight
-        u = t + math.pi / 2.0
+    start_time = time.time()
+
+    while True:
+        elapsed = time.time() - start_time
+
+        if elapsed >= T:
+            break
+
+        # Start at the crossing point of the figure-eight
+        u = math.pi / 2.0 + alpha * elapsed
 
         sin_u = math.sin(u)
         cos_u = math.cos(u)
 
-        # Linear velocity along Bernoulli lemniscate
-        v = a * alpha / math.sqrt(1.0 + sin_u * sin_u)
+        # Speed along Bernoulli lemniscate
+        v = (
+            a * alpha
+            / math.sqrt(1.0 + sin_u * sin_u)
+        )
 
-        # Curvature
-        kappa = (3.0 * cos_u) / (
-            a * math.sqrt(1.0 + sin_u * sin_u)
+        # Time-varying curvature
+        kappa = (
+            3.0 * cos_u
+            / (a * math.sqrt(1.0 + sin_u * sin_u))
         )
 
         # Robot angular velocity
         omega = v * kappa
 
-        # Left/right wheel linear velocities
+        # Differential-drive wheel velocities
         v_l = v - omega * (W / 2.0)
         v_r = v + omega * (W / 2.0)
 
-        # Convert cm/s -> motor degrees/s
+        # cm/s -> motor degrees/s
         dps_l = (v_l / wheel_radius) * 180.0 / math.pi
         dps_r = (v_r / wheel_radius) * 180.0 / math.pi
 
@@ -128,11 +143,11 @@ def lemniscate():
         )
 
         time.sleep(dt)
-        t += alpha * dt
 
     robot_drive.off(brake=True)
+
     print("LEMNISCATE complete")
-    
+
 def turn_90_dumb():
     turn_rotations = BASE_WIDTH / (4.0 * WHEEL_DIAMETER)
 
