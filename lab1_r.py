@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import time, math
-from ev3dev2.motor import MoveTank, LargeMotor, OUTPUT_A, OUTPUT_B, SpeedPercent
+from ev3dev2.motor import MoveTank, LargeMotor, OUTPUT_A, OUTPUT_B, SpeedPercent, SpeedDPS
 from ev3dev2.motor import SpeedPercent
 from ev3dev2.sensor.lego import GyroSensor
 from ev3dev2.sensor import INPUT_1
@@ -86,8 +86,53 @@ def rectangle():
     print("RECTANGLE complete")
 
 def lemniscate():
-    pass
+    a = 50.0                         # 0.5 m in cm
+    W = BASE_WIDTH                   # distance between wheels, cm
+    wheel_radius = WHEEL_DIAMETER / 2.0
 
+    T = 20.0                         # time for full figure-eight, seconds
+    dt = 0.03
+    alpha = 2.0 * math.pi / T
+
+    t = 0.0
+
+    while t < 2.0 * math.pi:
+        # Start at the centre of the figure-eight
+        u = t + math.pi / 2.0
+
+        sin_u = math.sin(u)
+        cos_u = math.cos(u)
+
+        # Linear velocity along Bernoulli lemniscate
+        v = a * alpha / math.sqrt(1.0 + sin_u * sin_u)
+
+        # Curvature
+        kappa = (3.0 * cos_u) / (
+            a * math.sqrt(1.0 + sin_u * sin_u)
+        )
+
+        # Robot angular velocity
+        omega = v * kappa
+
+        # Left/right wheel linear velocities
+        v_l = v - omega * (W / 2.0)
+        v_r = v + omega * (W / 2.0)
+
+        # Convert cm/s -> motor degrees/s
+        dps_l = (v_l / wheel_radius) * 180.0 / math.pi
+        dps_r = (v_r / wheel_radius) * 180.0 / math.pi
+
+        robot_drive.on(
+            SpeedDPS(dps_l),
+            SpeedDPS(dps_r)
+        )
+
+        time.sleep(dt)
+        t += alpha * dt
+
+    robot_drive.off(brake=True)
+    print("LEMNISCATE complete")
+    
 def turn_90_dumb():
     turn_rotations = BASE_WIDTH / (4.0 * WHEEL_DIAMETER)
 
@@ -119,6 +164,7 @@ def main():
         print("1: Straight Line")
         print("2: Circle")
         print("3: Rectangle")
+        print("4: Lemniscate")
         print("q: Quit")
         
         choice = input("Enter choice: ").strip()
@@ -129,6 +175,8 @@ def main():
             circle()
         elif choice == '3':
             rectangle()
+        elif choice == '4':
+            lemniscate()
         elif choice.lower() == '5':
             turn_90_dumb()
         elif choice.lower() == 'q':
