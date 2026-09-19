@@ -22,6 +22,7 @@ right_motor.ramp_down_sp = 2000
 WHEEL_DIAMETER = 5.6
 BASE_WIDTH = 15.0  
 OUTER_SPEED = 30
+TARGET_ANGLE = 85
 
 CIRCUMFERENCE = 2 * (WHEEL_DIAMETER / 2.0) * math.pi
 
@@ -59,8 +60,8 @@ def rectangle():
         robot_drive.off(brake=True)
         print("Turned:", abs(gyro.angle - start), "degrees")
 
-    length_rotations = 50 / CIRCUMFERENCE
-    width_rotations = 30 / CIRCUMFERENCE
+    length_rotations = 100 / CIRCUMFERENCE
+    width_rotations = 50 / CIRCUMFERENCE
 
     robot_drive.on_for_rotations(SpeedPercent(OUTER_SPEED), SpeedPercent(OUTER_SPEED), rotations=length_rotations)
     # time.sleep(0.1)
@@ -160,7 +161,7 @@ def turn_90_dumb():
         brake=True
     )
 
-    while abs(gyro.angle - start_angle) < 90:
+    while abs(gyro.angle - start_angle) < TARGET_ANGLE:
         robot_drive.on(
             SpeedPercent(-OUTER_SPEED / 6),
             SpeedPercent(OUTER_SPEED / 6)
